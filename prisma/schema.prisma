@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String
+  systemPrompt   String
+  model          String   @default("claude-sonnet-4-20250514")
+  maxTokens      Int      @default(4096)
+  temperature    Float?
+  tools          String   // JSON string of tool definitions
+  toolConfig     String?  // JSON string of extra config
+  useThinking    Boolean  @default(false)
+  thinkingBudget Int?
+  maxIterations  Int      @default(25)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversations Conversation[]
+  usageLogs     UsageLog[]
+  evalTestCases EvalTestCase[]
+  evalRuns      EvalRun[]
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            String
+  content         String
+  thinkingContent String?
+  createdAt       DateTime @default(now())
+
+  toolCalls ToolCall[]
+}
+
+model ToolCall {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  toolName  String
+  toolId    String   // Anthropic tool_use id
+  input     String   // JSON
+  result    String   // Tool result string
+  isError   Boolean  @default(false)
+  duration  Int      // ms
+  createdAt DateTime @default(now())
+}
+
+model UsageLog {
+  id              String   @id @default(cuid())
+  agentId         String
+  agent           Agent    @relation(fields: [agentId], references: [id])
+  conversationId  String?
+  model           String
+  inputTokens     Int
+  outputTokens    Int
+  thinkingTokens  Int      @default(0)
+  totalCost       Float
+  latency         Int      // ms
+  toolCallCount   Int      @default(0)
+  iterations      Int      @default(1)
+  success         Boolean
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([createdAt])
+}
+
+model EvalTestCase {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  name      String
+  input     String
+  context   String?  // JSON
+  criteria  String   // JSON array of {type, value}
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  results EvalResult[]
+}
+
+model EvalRun {
+  id          String    @id @default(cuid())
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id])
+  status      String    @default("pending")
+  totalCases  Int       @default(0)
+  passedCases Int       @default(0)
+  failedCases Int       @default(0)
+  totalCost   Float     @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  results EvalResult[]
+}
+
+model EvalResult {
+  id         String   @id @default(cuid())
+  runId      String
+  run        EvalRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  testCaseId String
+  testCase   EvalTestCase @relation(fields: [testCaseId], references: [id])
+  passed     Boolean
+  output     String
+  details    String   // JSON per-criterion
+  latency    Int
+  tokenUsage String   // JSON
+  createdAt  DateTime @default(now())
+}
