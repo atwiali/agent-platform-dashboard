@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find c:/Users/User/starlake-projects/multi-agent-app-generator/src -type f -name *.ts)",
+      "Bash(find c:/Users/User/starlake-projects/rag-docs-agent/src -type f -name *.ts)",
+      "Bash(find c:/Users/User/starlake-projects/ai-code-review-agent/src -type f -name *.ts)",
+      "Bash(find c:/Users/User/starlake-projects/claude-cli-assistant/src -type f -name *.ts)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack)",
+      "Bash(npx create-next-app@latest temp-next --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack)",
+      "Bash(cp -r temp-next/* temp-next/.* .)",
+      "Bash(rm -rf temp-next)",
+      "Bash(mv temp-next/package.json temp-next/tsconfig.json temp-next/next.config.ts temp-next/next-env.d.ts temp-next/eslint.config.mjs temp-next/postcss.config.mjs .)",
+      "Bash(mv temp-next/src .)",
+      "Bash(mv temp-next/public .)",
+      "Bash(mv temp-next/node_modules .)",
+      "Bash(rm -rf node_modules)",
+      "Bash(rm -rf temp-next/node_modules)",
+      "Bash(npm ls:*)",
+      "Bash(tasklist)",
+      "Bash(cmd //c \"rmdir /s /q node_modules\")",
+      "Bash(cmd //c \"rmdir /s /q node_modules_old\")",
+      "Bash(npx shadcn@latest init -d --defaults)"
+    ]
+  }
+}
